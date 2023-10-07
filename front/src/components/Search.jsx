@@ -12,6 +12,12 @@ import Button from "@mui/material/Button";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import styled from "@emotion/styled";
+import { LinearProgress } from "@mui/material";
+
+const ProgressContainer = styled.div`
+  position: absolute;
+  width: 100%;
+`;
 
 const StyledTextField = styled(TextField)`
   .MuiOutlinedInput-root {
@@ -156,19 +162,37 @@ const ResultsContainer = styled.div`
   scrollbar-width: thin;
 `;
 
+const ResultsCount = styled.div`
+  font-size: 14px;
+  color: #999; // 薄い色で表示
+  margin-bottom: 16px;
+`;
+
 function Search() {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [results, setResults] = useState([]);
   const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleEdit = (id) => {
     navigate(`/edit/${id}/`);
   };
 
+  const handleWheel = (e) => {
+    const container = document.getElementById("results-container");
+    if (container) {
+      // deltaYプロパティでマウスホイールの移動量を取得し、スクロール位置を更新
+      container.scrollTop += e.deltaY;
+    }
+  };
+
   const fetchResults = async () => {
+    setIsLoading(true);
     const data = await fetchSearchResults(searchTerm, page);
+    setIsLoading(false);
 
     if (data && data.length === 0) {
       setHasMore(false);
@@ -227,8 +251,13 @@ function Search() {
             ),
           }}
         />
+        <ResultsCount>{results.length} 件の結果</ResultsCount>{" "}
+        {/* 検索件数の表示 */}
+        {isLoading && ( // 検索中にプログレスバーを表示
+          <LinearProgress />
+        )}
       </SearchContainer>
-      <ResultsContainer>
+      <ResultsContainer onWheel={handleWheel} id="results-container">
         {results.map((item) => (
           <StyledCard key={item.id} variant="outlined">
             <EditButton
